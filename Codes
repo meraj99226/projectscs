@@ -1,0 +1,237 @@
+Android App Source Code:-
+
+XML Code:-
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayoutxmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:background="@color/maincolor"
+tools:context=".MainActivity"
+>
+
+<Button
+android:id="@+id/stop"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="stop"
+android:background="@color/white"
+android:layout_centerInParent="true"
+        />
+<Button
+android:id="@+id/backward"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Backward"
+android:background="@color/white"
+android:layout_centerInParent="true"
+android:layout_below="@+id/stop"
+android:layout_margin="30dp"
+
+        />
+<Button
+android:id="@+id/forward"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Forward"
+android:background="@color/white"
+android:layout_centerInParent="true"
+android:layout_above="@+id/stop"
+android:layout_margin="30dp"
+        />
+<Button
+android:id="@+id/left"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Left"
+android:background="@color/white"
+android:layout_centerInParent="true"
+android:layout_toLeftOf="@+id/stop"
+android:layout_margin="30dp"
+        />
+<Button
+android:id="@+id/right"
+android:layout_width="wrap_content"
+android:layout_height="wrap_content"
+android:text="Right"
+android:background="@color/white"
+android:layout_centerInParent="true"
+android:layout_toRightOf="@+id/stop"
+android:layout_margin="30dp"
+        />
+
+
+
+</RelativeLayout>
+
+
+JAVA Code :-
+
+package com.example.myapplication;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.bluetooth.BluetoothAdapter;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+public class MainActivity extends AppCompatActivity {
+
+
+
+    private Button Forward, stop ,Backward,Left,Right;
+
+
+FirebaseDatabase database = FirebaseDatabase.getInstance();
+DatabaseReferencemyRef = database.getReference("MOTOR_STATUS");
+
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+        Forward=findViewById(R.id.forward) ;
+        stop=findViewById(R.id.stop);
+        Backward=findViewById(R.id.backward);
+        Left=findViewById(R.id.left);
+        Right=findViewById(R.id.right);
+
+Forward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+myRef.setValue("F");
+
+            }
+        });
+
+stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+myRef.setValue("OFF");
+            }
+        });
+Backward.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+myRef.setValue("B");
+            }
+        });
+Left.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+myRef.setValue("L");
+            }
+        });
+Right.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+myRef.setValue("R");
+            }
+        });
+
+    }
+}
+
+
+
+
+
+
+
+ArduinoCode :-
+
+#include <Firebase.h>
+#include <FirebaseArduino.h>
+#include <FirebaseCloudMessaging.h>
+#include <FirebaseError.h>
+#include <FirebaseHttpClient.h>
+#include <FirebaseObject.h>
+#include <ESP8266WiFi.h>                                                // esp8266 library
+#include <FirebaseArduino.h>                                             // firebase library
+
+
+#define FIREBASE_HOST "mycar-60349.firebaseio.com"                         // the project name address from firebase id
+#define FIREBASE_AUTH "PVoGgReMmbeMWgmIzskD9E9MFK7Q2eg7CGdxE6iF"           // the secret key generated from firebase
+#define WIFI_SSID "WIFI"                                                 // input your home or public wifi name 
+#define WIFI_PASSWORD "qwertyuiop"                                        //password of wifissid
+
+String fireStatus = "";                                                     //  status received from firebase
+int IN1 = D3;                     // D3 = FORWARD LEFT MOTORS
+int IN2= D4;                      // D4= BACKWARD LEFT MOTORS
+int IN3= D5;                      // D5=  FORWARD RIGHT MOTORS
+int IN4= D6;                      // D6= BACKWARD RIGHT MOTORS
+
+
+void setup() {
+Serial.begin(9600);
+delay(1000);     
+pinMode(IN1, OUTPUT);
+pinMode(IN2, OUTPUT);   
+pinMode(IN3,OUTPUT);
+pinMode(IN4,OUTPUT);              
+WiFi.begin(WIFI_SSID, WIFI_PASSWORD);                                      //try to connect with wifi
+Serial.print("Connecting to ");
+Serial.print(WIFI_SSID);
+while (WiFi.status() != WL_CONNECTED) {
+Serial.print(".");
+delay(500);
+  }
+Serial.println();
+Serial.print("Connected to ");
+Serial.println(WIFI_SSID);
+Serial.print("IP Address is : ");
+Serial.println(WiFi.localIP());                                                      //print local IP address
+Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);                                       // connect to firebase
+Firebase.setString("MOTOR_STATUS", "OFF");                                          //send initial string of MOTOR status
+}
+
+void loop() {
+fireStatus = Firebase.getString("MOTOR_STATUS");                                      // get status input from firebase
+if (fireStatus == "F") {                                                          // compare the input of MOTOR received from firebase
+Serial.println("forward Turned ON");                                                                          
+digitalWrite(IN1,HIGH);                                                         // make forward 
+digitalWrite(IN2,LOW);   
+digitalWrite(IN3,HIGH);
+digitalWrite(IN4,LOW);                                         
+  } 
+else if (fireStatus == "B") {                                                  // compare the input of Backward received from firebase
+Serial.println("Backward Turned OFF");
+digitalWrite(LED_BUILTIN, HIGH);                                               
+digitalWrite(IN1, LOW);                                                             // Make backward
+digitalWrite(IN2, HIGH);  
+digitalWrite(IN3,LOW);
+digitalWrite(IN4, HIGH);  
+  }
+else if(fireStatus == "L"){
+
+digitalWrite(IN1, LOW);                                                            
+digitalWrite(IN2, HIGH);  
+digitalWrite(IN3,HIGH);
+digitalWrite(IN4, LOW); 
+  }
+else if(fireStatus == "R"){                                           
+digitalWrite(IN1,HIGH);                                                             
+digitalWrite(IN2, LOW);  
+digitalWrite(IN3,LOW);
+digitalWrite(IN4, HIGH); 
+  }
+else if (fireStatus == "OFF") {                                                  // compare the status received from firebase
+
+
+digitalWrite(IN1,LOW);                                                             
+digitalWrite(IN2,LOW);  
+digitalWrite(IN3,LOW);
+digitalWrite(IN4,LOW); 
+
+  }
+
+else {
+Serial.println("Wrong Credential! Please send Values");
+  }
+}
